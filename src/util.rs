@@ -23,8 +23,8 @@ impl<T: Clone> MMRStoreReadOps<T> for &MemStore<T> {
     }
 }
 
-impl<T> MMRStoreWriteOps<T> for &MemStore<T> {
-    fn append(&mut self, pos: u64, elems: Vec<T>) -> Result<()> {
+impl<T, ForkUnique> MMRStoreWriteOps<T, ForkUnique> for &MemStore<T> {
+    fn append(&mut self, pos: u64, elems: Vec<T>, _unique: ForkUnique) -> Result<()> {
         let mut store = self.0.borrow_mut();
         for (i, elem) in elems.into_iter().enumerate() {
             store.insert(pos + i as u64, elem);
@@ -33,4 +33,4 @@ impl<T> MMRStoreWriteOps<T> for &MemStore<T> {
     }
 }
 
-pub type MemMMR<'a, T, M> = MMR<T, M, &'a MemStore<T>>;
+pub type MemMMR<'a, T, M, ForkUnique> = MMR<T, M, &'a MemStore<T>, ForkUnique>;

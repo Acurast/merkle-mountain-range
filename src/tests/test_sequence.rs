@@ -5,7 +5,7 @@ use rand::{prelude::*, thread_rng};
 
 use crate::{util::MemStore, Merge, Result, MMR};
 
-#[derive(Eq, PartialEq, Clone, Default)]
+#[derive(Eq, PartialEq, Copy, Clone, Default)]
 struct NumberRange {
     start: u32,
     end: u32,
@@ -55,7 +55,7 @@ impl Merge for MergeNumberRange {
 
 fn test_sequence_sub_func(count: u32, proof_elem: Vec<u32>) {
     let store = MemStore::default();
-    let mut mmr = MMR::<_, MergeNumberRange, _>::new(0, &store);
+    let mut mmr = MMR::<_, MergeNumberRange, _, NumberRange>::new(0, &store);
     let positions = (0..count)
         .map(|i| mmr.push(NumberRange::from(i)).expect("push"))
         .collect::<Vec<_>>();
@@ -72,7 +72,7 @@ fn test_sequence_sub_func(count: u32, proof_elem: Vec<u32>) {
     for item in proof.proof_items() {
         assert!(item.is_normalized())
     }
-    mmr.commit().expect("commit");
+    mmr.commit(&root).expect("commit");
     let result = proof
         .verify(
             root,
