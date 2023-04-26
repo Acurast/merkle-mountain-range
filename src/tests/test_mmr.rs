@@ -11,7 +11,7 @@ use rand::{seq::SliceRandom, thread_rng};
 
 fn test_mmr(count: u32, proof_elem: Vec<u32>) {
     let store = MemStore::default();
-    let mut mmr = MemMMR::<_, MergeNumberHash>::new(0, &store);
+    let mut mmr = MemMMR::<_, MergeNumberHash, NumberHash>::new(0, &store);
     let positions: Vec<u64> = (0u32..count)
         .map(|i| mmr.push(NumberHash::from(i)).unwrap())
         .collect();
@@ -24,7 +24,7 @@ fn test_mmr(count: u32, proof_elem: Vec<u32>) {
                 .collect(),
         )
         .expect("gen proof");
-    mmr.commit().expect("commit changes");
+    mmr.commit(&root).expect("commit changes");
     let result = proof
         .verify(
             root,
@@ -39,7 +39,7 @@ fn test_mmr(count: u32, proof_elem: Vec<u32>) {
 
 fn test_gen_new_root_from_proof(count: u32) {
     let store = MemStore::default();
-    let mut mmr = MemMMR::<_, MergeNumberHash>::new(0, &store);
+    let mut mmr = MemMMR::<_, MergeNumberHash, NumberHash>::new(0, &store);
     let positions: Vec<u64> = (0u32..count)
         .map(|i| mmr.push(NumberHash::from(i)).unwrap())
         .collect();
@@ -49,7 +49,7 @@ fn test_gen_new_root_from_proof(count: u32) {
     let new_elem = count;
     let new_pos = mmr.push(NumberHash::from(new_elem)).unwrap();
     let root = mmr.get_root().expect("get root");
-    mmr.commit().expect("commit changes");
+    mmr.commit(&root).expect("commit changes");
     let calculated_root = proof
         .calculate_root_with_new_leaf(
             vec![(pos, NumberHash::from(elem))],
@@ -64,7 +64,7 @@ fn test_gen_new_root_from_proof(count: u32) {
 #[test]
 fn test_mmr_root() {
     let store = MemStore::default();
-    let mut mmr = MemMMR::<_, MergeNumberHash>::new(0, &store);
+    let mut mmr = MemMMR::<_, MergeNumberHash, NumberHash>::new(0, &store);
     (0u32..11).for_each(|i| {
         mmr.push(NumberHash::from(i)).unwrap();
     });
@@ -79,7 +79,7 @@ fn test_mmr_root() {
 #[test]
 fn test_empty_mmr_root() {
     let store = MemStore::<NumberHash>::default();
-    let mmr = MemMMR::<_, MergeNumberHash>::new(0, &store);
+    let mmr = MemMMR::<_, MergeNumberHash, u8>::new(0, &store);
     assert_eq!(Err(Error::GetRootOnEmpty), mmr.get_root());
 }
 
@@ -188,7 +188,7 @@ fn test_invalid_proof_verification(
     }
 
     let store = MemStore::default();
-    let mut mmr = MemMMR::<_, MyMerge>::new(0, &store);
+    let mut mmr = MemMMR::<_, MyMerge, MyItem>::new(0, &store);
     let mut positions: Vec<u64> = Vec::new();
     for i in 0u32..leaf_count {
         let pos = mmr.push(MyItem::Number(i)).unwrap();

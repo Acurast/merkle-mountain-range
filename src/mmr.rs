@@ -15,13 +15,13 @@ use core::fmt::Debug;
 use core::marker::PhantomData;
 
 #[allow(clippy::upper_case_acronyms)]
-pub struct MMR<T, M, S> {
+pub struct MMR<T, M, S, ForkUnique> {
     mmr_size: u64,
-    batch: MMRBatch<T, S>,
-    merge: PhantomData<M>,
+    batch: MMRBatch<T, S, ForkUnique>,
+    merge: PhantomData<(M, ForkUnique)>,
 }
 
-impl<T, M, S> MMR<T, M, S> {
+impl<T, M, S, ForkUnique> MMR<T, M, S, ForkUnique> {
     pub fn new(mmr_size: u64, store: S) -> Self {
         MMR {
             mmr_size,
@@ -38,7 +38,7 @@ impl<T, M, S> MMR<T, M, S> {
         self.mmr_size == 0
     }
 
-    pub fn batch(&self) -> &MMRBatch<T, S> {
+    pub fn batch(&self) -> &MMRBatch<T, S, ForkUnique> {
         &self.batch
     }
 
@@ -47,7 +47,9 @@ impl<T, M, S> MMR<T, M, S> {
     }
 }
 
-impl<T: Clone + PartialEq, M: Merge<Item = T>, S: MMRStoreReadOps<T>> MMR<T, M, S> {
+impl<T: Clone + PartialEq, M: Merge<Item = T>, S: MMRStoreReadOps<T>, ForkUnique>
+    MMR<T, M, S, ForkUnique>
+{
     // find internal MMR elem, the pos must exists, otherwise a error will return
     fn find_elem<'b>(&self, pos: u64, hashes: &'b [T]) -> Result<Cow<'b, T>> {
         let pos_offset = pos.checked_sub(self.mmr_size);
@@ -223,9 +225,9 @@ impl<T: Clone + PartialEq, M: Merge<Item = T>, S: MMRStoreReadOps<T>> MMR<T, M, 
     }
 }
 
-impl<T, M, S: MMRStoreWriteOps<T>> MMR<T, M, S> {
-    pub fn commit(&mut self) -> Result<()> {
-        self.batch.commit()
+impl<T, M, S: MMRStoreWriteOps<T, ForkUnique>, ForkUnique: Clone> MMR<T, M, S, ForkUnique> {
+    pub fn commit(&mut self, unique: &ForkUnique) -> Result<()> {
+        self.batch.commit(unique)
     }
 }
 

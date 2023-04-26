@@ -12,7 +12,7 @@ lazy_static! {
     /// Positions of 0..100_000 elem
     static ref INDEX_TO_POS: Vec<u64> = {
         let store = MemStore::default();
-        let mut mmr = MMR::<_,MergeNumberHash,_>::new(0, &store);
+        let mut mmr = MMR::<_,MergeNumberHash,_, u8>::new(0, &store);
         (0u32..100_000)
             .map(|i| mmr.push(NumberHash::from(i)).unwrap())
             .collect()
@@ -20,7 +20,7 @@ lazy_static! {
     /// mmr size when 0..100_000 elem
     static ref INDEX_TO_MMR_SIZE: Vec<u64> = {
         let store = MemStore::default();
-        let mut mmr = MMR::<_,MergeNumberHash,_>::new(0, &store);
+        let mut mmr = MMR::<_,MergeNumberHash,_, u8>::new(0, &store);
         (0u32..100_000)
             .map(|i| {
                 mmr.push(NumberHash::from(i)).unwrap();

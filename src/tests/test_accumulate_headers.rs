@@ -103,7 +103,8 @@ impl Prover {
     }
 
     fn gen_blocks(&mut self, count: u64) -> Result<()> {
-        let mut mmr = MMR::<_, MergeHashWithTD, _>::new(self.positions.len() as u64, &self.store);
+        let mut mmr =
+            MMR::<_, MergeHashWithTD, _, u8>::new(self.positions.len() as u64, &self.store);
         // get previous element
         let mut previous = if let Some(pos) = self.positions.last() {
             mmr.store().get_elem(*pos)?.expect("exists")
@@ -135,7 +136,7 @@ impl Prover {
             self.positions.push(pos);
             self.headers.push((block, previous.td));
         }
-        mmr.commit()
+        mmr.commit(&0)
     }
 
     fn get_header(&self, number: u64) -> (Header, u64) {
@@ -151,7 +152,7 @@ impl Prover {
         assert!(number < later_number);
         let pos = self.positions[number as usize];
         let later_pos = self.positions[later_number as usize];
-        let mmr = MMR::new(later_pos, &self.store);
+        let mmr = MMR::<_, _, _, u8>::new(later_pos, &self.store);
         assert_eq!(
             mmr.get_root()?.serialize(),
             self.headers[later_number as usize].0.chain_root
